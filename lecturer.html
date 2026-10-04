@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusHub — Lecturer</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">Loading CampusHub…</div>
+
+  <div class="app-shell" id="appShell" style="display:none;">
+    <div class="topbar">
+      <h1>CampusHub <span class="role-badge">Lecturer</span></h1>
+      <div class="user-info">
+        <span id="userName"></span>
+        <button class="btn-logout" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="section-tabs">
+        <button class="section-tab active" data-section="info">Information</button>
+        <button class="section-tab" data-section="enroll">Enrollment</button>
+        <button class="section-tab" data-section="lostfound">Lost & Found</button>
+        <button class="section-tab" data-section="timetable">Calendar</button>
+      </div>
+
+      <!-- ============================================================
+           Information
+      ============================================================ -->
+      <div class="section-panel active" id="section-info">
+        <div class="subtabs">
+          <button class="subtab active" data-subtab="general">General Info</button>
+          <button class="subtab" data-subtab="courseinfo">Course Info</button>
+        </div>
+
+        <div class="subpanel active" id="subtab-general">
+          <div class="section-header">
+            <h2>General Info</h2>
+            <button class="btn btn-primary" style="width:auto;" id="addGeneralInfoBtn">+ Add Info</button>
+          </div>
+          <p class="small-muted" style="margin-bottom:14px;">Visible to every student — documents, pictures or typed messages.</p>
+          <div id="generalInfoList"></div>
+        </div>
+
+        <div class="subpanel" id="subtab-courseinfo">
+          <div class="section-header"><h2>Course Info</h2></div>
+          <p class="small-muted" style="margin-bottom:14px;">Pick a course to manage each of its subjects' WhatsApp group link and info items. Students only see the info for courses they're enrolled in.</p>
+          <div class="field" style="max-width:360px;">
+            <label for="infoCourseSelect">Course</label>
+            <select id="infoCourseSelect"><option value="">Select a course…</option></select>
+          </div>
+          <div id="courseInfoList"></div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Enrollment (unchanged)
+      ============================================================ -->
+      <div class="section-panel" id="section-enroll">
+        <div class="section-header"><h2>Enroll a Student</h2></div>
+        <div class="placeholder-card">
+          <div class="filter-row">
+            <div class="field"><label for="enrollDegree">Degree</label><select id="enrollDegree"></select></div>
+            <div class="field"><label for="enrollYear">Year</label><select id="enrollYear"></select></div>
+          </div>
+          <div class="field">
+            <label for="enrollCourseSelect">Course</label>
+            <select id="enrollCourseSelect"></select>
+          </div>
+          <div class="field">
+            <label for="enrollEmailInput">Student email</label>
+            <input type="email" id="enrollEmailInput" placeholder="student@college.ac.za" />
+          </div>
+          <button class="btn btn-primary" style="width:auto;" id="enrollBtn">Enroll Student</button>
+          <div class="form-msg" id="enrollMsg" style="margin-top:12px;"></div>
+        </div>
+        <h2 style="font-size:16px; color:var(--navy); margin:20px 0 10px;">Enrolled Students</h2>
+        <table class="data-table">
+          <thead><tr><th>Student</th><th>Course</th><th>Enrolled</th><th>Actions</th></tr></thead>
+          <tbody id="enrollTableBody"><tr class="empty-row"><td colspan="4">Select a course above.</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- ============================================================
+           Lost & Found (unchanged)
+      ============================================================ -->
+      <div class="section-panel" id="section-lostfound">
+        <div class="section-header"><h2>Lost & Found — Reported Items</h2></div>
+        <table class="data-table">
+          <thead><tr><th>Item</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="lostFoundTableBody"><tr class="empty-row"><td colspan="4">Loading…</td></tr></tbody>
+        </table>
+        <h2 style="font-size:16px; color:var(--navy); margin:20px 0 10px;">Pending Claims</h2>
+        <table class="data-table">
+          <thead><tr><th>Item</th><th>Claimed by</th><th>Submitted</th><th>Actions</th></tr></thead>
+          <tbody id="claimsTableBody"><tr class="empty-row"><td colspan="4">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- ============================================================
+           Calendar
+      ============================================================ -->
+      <div class="section-panel" id="section-timetable">
+        <div class="subtabs">
+          <button class="subtab active" data-subtab="mytt">My Timetable</button>
+          <button class="subtab" data-subtab="coursett">Course Timetable</button>
+          <button class="subtab" data-subtab="semdates">Semester Dates</button>
+        </div>
+
+        <!-- My Timetable -->
+        <div class="subpanel active" id="subtab-mytt">
+          <div class="section-header"><h2>My Timetable</h2></div>
+          <table class="data-table">
+            <thead><tr><th>Day</th><th>Time</th><th>Sem</th><th>Course</th><th>Subject</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+            <tbody id="myTimetableBody"><tr class="empty-row"><td colspan="8">Loading…</td></tr></tbody>
+          </table>
+
+          <h2 style="font-size:14px; color:var(--navy); margin:20px 0 10px;">Add / Edit a Class</h2>
+          <form id="myScheduleForm" class="placeholder-card">
+            <input type="hidden" id="mySchedEntryId" />
+            <div class="filter-row">
+              <div class="field">
+                <label for="mySchedCourse">Course</label>
+                <select id="mySchedCourse" required></select>
+              </div>
+              <div class="field">
+                <label for="mySchedSemester">Semester</label>
+                <select id="mySchedSemester" required></select>
+              </div>
+              <div class="field">
+                <label for="mySchedSubject">Subject</label>
+                <select id="mySchedSubject" required></select>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <select id="mySchedDay" style="flex:1;"></select>
+              <input type="time" id="mySchedStart" required style="flex:1;" />
+              <input type="time" id="mySchedEnd" required style="flex:1;" />
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <input type="text" id="mySchedVenue" placeholder="Venue" style="flex:1; padding:10px 12px; border:2px solid var(--bg); border-radius:6px;" />
+              <select id="mySchedStatus" style="flex:1;"></select>
+            </div>
+            <div class="modal-actions" style="margin-top:10px;">
+              <button type="submit" class="btn btn-primary" id="mySchedSubmitBtn" style="width:auto;">+ Add to My Timetable</button>
+              <button type="button" class="btn btn-secondary hidden" id="cancelMySchedEdit" style="width:auto;">Cancel Edit</button>
+            </div>
+            <div class="form-msg" id="mySchedMsg" style="margin-top:10px;"></div>
+          </form>
+        </div>
+
+        <!-- Course Timetable -->
+        <div class="subpanel" id="subtab-coursett">
+          <div class="section-header"><h2>Course Timetable</h2></div>
+          <div class="field" style="max-width:360px;">
+            <label for="ttCourseSelect">Course</label>
+            <select id="ttCourseSelect"><option value="">Select a course…</option></select>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Day</th><th>Time</th><th>Sem</th><th>Subject</th><th>Lecturer</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+            <tbody id="courseTimetableBody"><tr class="empty-row"><td colspan="8">Choose a course above.</td></tr></tbody>
+          </table>
+
+          <h2 style="font-size:14px; color:var(--navy); margin:20px 0 10px;">Add / Edit a Class</h2>
+          <form id="courseScheduleForm" class="placeholder-card">
+            <input type="hidden" id="ttSchedEntryId" />
+            <div class="filter-row">
+              <div class="field">
+                <label for="ttSchedSemester">Semester</label>
+                <select id="ttSchedSemester" required></select>
+              </div>
+              <div class="field">
+                <label for="ttSchedSubject">Subject</label>
+                <select id="ttSchedSubject" required></select>
+              </div>
+              <div class="field">
+                <label for="ttSchedLecturer">Lecturer</label>
+                <select id="ttSchedLecturer" required></select>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <select id="ttSchedDay" style="flex:1;"></select>
+              <input type="time" id="ttSchedStart" required style="flex:1;" />
+              <input type="time" id="ttSchedEnd" required style="flex:1;" />
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <input type="text" id="ttSchedVenue" placeholder="Venue" style="flex:1; padding:10px 12px; border:2px solid var(--bg); border-radius:6px;" />
+              <select id="ttSchedStatus" style="flex:1;"></select>
+            </div>
+            <div class="modal-actions" style="margin-top:10px;">
+              <button type="submit" class="btn btn-primary" id="ttSchedSubmitBtn" style="width:auto;">+ Add to Course Timetable</button>
+              <button type="button" class="btn btn-secondary hidden" id="cancelTtSchedEdit" style="width:auto;">Cancel Edit</button>
+            </div>
+            <div class="form-msg" id="ttSchedMsg" style="margin-top:10px;"></div>
+          </form>
+
+          <hr style="margin:26px 0; border:none; border-top:1px solid var(--border);" />
+
+          <h2 style="font-size:14px; color:var(--navy); margin-bottom:6px;">Calendar Status Editor</h2>
+          <p class="small-muted" style="margin-bottom:14px;">Adjust this course's classes for one specific week, or mark whole days off (e.g. a public holiday) — without changing the default weekly schedule above.</p>
+
+          <div class="viewtabs">
+            <button class="viewtab active" data-view="weekly">Weekly</button>
+            <button class="viewtab" data-view="monthly">Monthly</button>
+          </div>
+
+          <div class="viewpanel active" id="ttView-weekly">
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" type="button" id="ttWeekPrev">‹</button>
+              <div class="calendar-label" id="ttWeekLabel">—</div>
+              <button class="calendar-nav-btn" type="button" id="ttWeekNext">›</button>
+            </div>
+            <div id="ttWeekList"></div>
+          </div>
+
+          <div class="viewpanel" id="ttView-monthly">
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" type="button" id="ttMonthPrev">‹</button>
+              <div class="calendar-label" id="ttMonthLabel">—</div>
+              <button class="calendar-nav-btn" type="button" id="ttMonthNext">›</button>
+            </div>
+            <div class="month-grid" id="ttMonthGrid"></div>
+            <div id="ttMonthDayDetail"></div>
+          </div>
+        </div>
+
+        <!-- Semester Dates -->
+        <div class="subpanel" id="subtab-semdates">
+          <div class="section-header"><h2>Semester Dates</h2></div>
+          <p class="small-muted" style="margin-bottom:14px;">These dates decide which semester's calendar students currently see, and bound the Weekly/Monthly editor above.</p>
+          <div id="semesterBars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- General info modal -->
+  <div class="modal-overlay hidden" id="generalInfoModal">
+    <div class="modal">
+      <h3>Add General Info</h3>
+      <div class="form-msg" id="generalInfoMsg"></div>
+      <form id="generalInfoForm">
+        <div class="field">
+          <label for="giType">Type</label>
+          <select id="giType">
+            <option value="message">Message</option>
+            <option value="document">Document (link)</option>
+            <option value="picture">Picture (link)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="giTitle">Title</label>
+          <input type="text" id="giTitle" required />
+        </div>
+        <div class="field" id="giMessageField">
+          <label for="giMessage">Message</label>
+          <textarea id="giMessage" rows="4" style="width:100%; padding:10px 12px; border:2px solid var(--bg); border-radius:6px; font-family:inherit; font-size:14px;"></textarea>
+        </div>
+        <div class="field" id="giLinkField" style="display:none;">
+          <label for="giLink">Link</label>
+          <input type="url" id="giLink" placeholder="https://…" />
+          <div class="hint">No file storage on the free Firebase plan — paste a Drive/OneDrive/image link instead.</div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelGeneralInfo">Cancel</button>
+          <button type="submit" class="btn btn-primary">Post Info</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Subject info modal -->
+  <div class="modal-overlay hidden" id="subjectInfoModal">
+    <div class="modal">
+      <h3 id="subjectInfoModalTitle">Add Info</h3>
+      <div class="form-msg" id="subjectInfoMsg"></div>
+      <form id="subjectInfoForm">
+        <div class="field">
+          <label for="siType">Type</label>
+          <select id="siType">
+            <option value="message">Message</option>
+            <option value="document">Document (link)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="siTitle">Title</label>
+          <input type="text" id="siTitle" required />
+        </div>
+        <div class="field" id="siMessageField">
+          <label for="siMessage">Message</label>
+          <textarea id="siMessage" rows="4" style="width:100%; padding:10px 12px; border:2px solid var(--bg); border-radius:6px; font-family:inherit; font-size:14px;"></textarea>
+        </div>
+        <div class="field" id="siLinkField" style="display:none;">
+          <label for="siLink">Link</label>
+          <input type="url" id="siLink" placeholder="https://…" />
+          <div class="hint">No file storage on the free Firebase plan — paste a Drive/OneDrive link instead.</div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelSubjectInfo">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Info</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/lecturer.js"></script>
+</body>
+</html>

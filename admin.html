@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusHub — Admin</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">Loading CampusHub…</div>
+
+  <div class="app-shell" id="appShell" style="display:none;">
+    <div class="topbar">
+      <h1>CampusHub <span class="role-badge">Admin</span></h1>
+      <div class="user-info">
+        <span id="userName"></span>
+        <button class="btn-logout" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="section-tabs">
+        <button class="section-tab active" data-section="users">Users</button>
+        <button class="section-tab" data-section="subjects">Subjects</button>
+        <button class="section-tab" data-section="courses">Courses</button>
+      </div>
+
+      <!-- ================= Users ================= -->
+      <div class="section-panel active" id="section-users">
+        <div class="section-header">
+          <h2>Users</h2>
+          <button class="btn btn-primary" style="width:auto;" id="addUserBtn">+ Add Lecturer / Admin</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr class="empty-row"><td colspan="6">Loading users…</td></tr>
+          </tbody>
+        </table>
+        <p class="small-muted" style="margin-top:10px;">
+          Roles and account status are set at creation and can't be edited here.
+          Need to change one later? Update it directly in Firestore's Data tab.
+        </p>
+      </div>
+
+      <!-- ================= Subjects ================= -->
+      <div class="section-panel" id="section-subjects">
+        <div class="section-header">
+          <h2>Subjects</h2>
+          <button class="btn btn-primary" style="width:auto;" id="addSubjectBtn">+ Add Subject</button>
+        </div>
+        <div class="filter-row">
+          <div class="field"><label for="subjFilterDegree">Degree</label><select id="subjFilterDegree"></select></div>
+          <div class="field"><label for="subjFilterYear">Year</label><select id="subjFilterYear"></select></div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Subject</th><th>Code</th><th>Degree</th><th>Year</th><th>Semester</th><th>Type</th></tr></thead>
+          <tbody id="subjectsTableBody">
+            <tr class="empty-row"><td colspan="6">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ================= Courses ================= -->
+      <div class="section-panel" id="section-courses">
+        <div class="section-header">
+          <h2>Courses</h2>
+          <button class="btn btn-primary" style="width:auto;" id="addCourseBtn">+ Create Course</button>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Course</th><th>Degree</th><th>Type</th><th>Year(s)</th><th>Subjects</th></tr></thead>
+          <tbody id="coursesTableBody">
+            <tr class="empty-row"><td colspan="5">Loading…</td></tr>
+          </tbody>
+        </table>
+        <p class="small-muted" style="margin-top:10px;">
+          Subjects and courses are create + view only. Lecturers enroll students into the courses you create here.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add user modal -->
+  <div class="modal-overlay hidden" id="addUserModal">
+    <div class="modal">
+      <h3>Add Lecturer / Admin</h3>
+      <div class="form-msg" id="addUserMsg"></div>
+      <form id="addUserForm">
+        <div class="field">
+          <label for="newName">Full name</label>
+          <input type="text" id="newName" required />
+        </div>
+        <div class="field">
+          <label for="newEmail">Email</label>
+          <input type="email" id="newEmail" required />
+        </div>
+        <div class="field">
+          <label for="newPassword">Temporary password</label>
+          <input type="password" id="newPassword" required minlength="6" />
+          <div class="hint">Share this with them directly — they can change it after logging in.</div>
+          <label class="hint" style="display:flex; align-items:center; gap:6px; margin-top:6px; cursor:pointer;">
+            <input type="checkbox" id="newPasswordToggle" style="width:auto;" /> Show password
+          </label>
+        </div>
+        <div class="field">
+          <label for="newRole">Role</label>
+          <select id="newRole">
+            <option value="lecturer">Lecturer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelAddUser">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="addUserSubmitBtn">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Login history modal -->
+  <div class="modal-overlay hidden" id="historyModal">
+    <div class="modal">
+      <h3 id="historyModalTitle">Login history</h3>
+      <table class="data-table" style="box-shadow:none; border:none;">
+        <thead><tr><th>When</th><th>Device / Browser</th></tr></thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="closeHistory">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add subject modal -->
+  <div class="modal-overlay hidden" id="subjectModal">
+    <div class="modal">
+      <h3>Add Subject</h3>
+      <div class="form-msg" id="subjectMsg"></div>
+      <form id="subjectForm">
+        <div class="field"><label for="subjName">Subject name</label><input type="text" id="subjName" required placeholder="e.g. Database Systems" /></div>
+        <div class="field"><label for="subjCode">Subject code (optional)</label><input type="text" id="subjCode" placeholder="e.g. DBS201" /></div>
+        <div class="field"><label for="subjDegree">Degree</label><select id="subjDegree"></select></div>
+        <div class="field"><label for="subjYear">Year</label><select id="subjYear"></select></div>
+        <div class="field"><label for="subjSemester">Semester</label><select id="subjSemester"></select></div>
+        <div class="field"><label for="subjType">Specialization</label><select id="subjType"></select></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelSubject">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="subjectSubmitBtn">Add Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create course modal -->
+  <div class="modal-overlay hidden" id="courseModal">
+    <div class="modal wide">
+      <h3>Create Course</h3>
+      <div class="form-msg" id="courseMsg"></div>
+      <form id="courseForm">
+        <div class="field">
+          <label for="crsName">Course name</label>
+          <input type="text" id="crsName" required placeholder="e.g. BSc IT Software Engineering" />
+        </div>
+        <div class="field">
+          <label for="crsKind">Course type</label>
+          <select id="crsKind">
+            <option value="general">General course (one year of a degree)</option>
+            <option value="specialized">Specialized course (spans a degree)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="crsDegree">Degree</label>
+          <select id="crsDegree"></select>
+        </div>
+        <div class="field" id="crsYearField">
+          <label for="crsYear">Year</label>
+          <select id="crsYear"></select>
+        </div>
+        <span class="picker-label">Subjects</span>
+        <div class="picker-box" id="crsSubjectPicker"></div>
+        <div class="hint" id="crsRuleHint" style="margin-bottom:14px;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelCourse">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="courseSubmitBtn">Create Course</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
