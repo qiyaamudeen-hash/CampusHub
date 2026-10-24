@@ -79,7 +79,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const role = await getUserRole(user.uid);
-         if (["student", "lecturer", "admin"].includes(role)) window.location.href = roleHome(role);
+if (["student", "lecturer", "admin"].includes(role)) window.location.href = roleHome(role);
       }
     });
 

@@ -199,20 +199,37 @@
           <hr style="margin:26px 0; border:none; border-top:1px solid var(--border);" />
 
           <h2 style="font-size:14px; color:var(--navy); margin-bottom:6px;">Calendar Status Editor</h2>
-          <p class="small-muted" style="margin-bottom:14px;">Adjust this course's classes for one specific week — without changing the default weekly schedule above.</p>
+          <p class="small-muted" style="margin-bottom:14px;">Adjust this course's classes for one specific week, or mark whole days off (e.g. a public holiday) — without changing the default weekly schedule above.</p>
 
-          <div class="calendar-nav">
-            <button class="calendar-nav-btn" type="button" id="ttWeekPrev">‹</button>
-            <div class="calendar-label" id="ttWeekLabel">—</div>
-            <button class="calendar-nav-btn" type="button" id="ttWeekNext">›</button>
+          <div class="viewtabs">
+            <button class="viewtab active" data-view="weekly">Weekly</button>
+            <button class="viewtab" data-view="monthly">Monthly</button>
           </div>
-          <div id="ttWeekList"></div>
+
+          <div class="viewpanel active" id="ttView-weekly">
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" type="button" id="ttWeekPrev">‹</button>
+              <div class="calendar-label" id="ttWeekLabel">—</div>
+              <button class="calendar-nav-btn" type="button" id="ttWeekNext">›</button>
+            </div>
+            <div id="ttWeekList"></div>
+          </div>
+
+          <div class="viewpanel" id="ttView-monthly">
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" type="button" id="ttMonthPrev">‹</button>
+              <div class="calendar-label" id="ttMonthLabel">—</div>
+              <button class="calendar-nav-btn" type="button" id="ttMonthNext">›</button>
+            </div>
+            <div class="month-grid" id="ttMonthGrid"></div>
+            <div id="ttMonthDayDetail"></div>
+          </div>
         </div>
 
         <!-- Semester Dates -->
         <div class="subpanel" id="subtab-semdates">
           <div class="section-header"><h2>Semester Dates</h2></div>
-          <p class="small-muted" style="margin-bottom:14px;">These dates decide which semester's calendar students currently see, and bound the Weekly editor above.</p>
+          <p class="small-muted" style="margin-bottom:14px;">These dates decide which semester's calendar students currently see, and bound the Weekly/Monthly editor above.</p>
           <div id="semesterBars"></div>
         </div>
       </div>
@@ -264,7 +281,9 @@
           <label for="siType">Type</label>
           <select id="siType">
             <option value="message">Message</option>
+            <option value="message">Message</option>
             <option value="document">Document (file)</option>
+            <option value="document-link">Document (link)</option>
             <option value="picture">Picture (file)</option>
           </select>
         </div>
@@ -280,6 +299,12 @@
           <label for="siFile">File</label>
           <input type="file" id="siFile" />
           <div class="hint">Saved on the computer running UploadServer.java — max 10 MB.</div>
+        </div>
+        <div class="field" id="siLinkField" style="display:none;">
+          <label for="siLink">Link</label>
+          <input type="url" id="siLink" placeholder="https://…" />
+          <div class="hint">No file storage on the free Firebase plan — paste a Drive/OneDrive link instead.</div>
+        </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="cancelSubjectInfo">Cancel</button>

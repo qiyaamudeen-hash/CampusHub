@@ -32,14 +32,31 @@
         <div id="noSessionNotice" style="display:none;"></div>
 
         <div id="calendarBody" style="display:none;">
-          <div class="calendar-nav">
-            <button class="calendar-nav-btn" id="calWeekPrev">‹</button>
-            <div class="calendar-label" id="calWeekLabel">—</div>
-            <button class="calendar-nav-btn" id="calWeekNext">›</button>
+          <div class="viewtabs">
+            <button class="viewtab active" data-view="week">Week</button>
+            <button class="viewtab" data-view="month">Month</button>
           </div>
-          <div class="week-strip" id="calWeekStrip"></div>
-          <h3 id="calSelectedDayLabel" style="font-size:14px; color:var(--navy); margin-bottom:10px;"></h3>
-          <div id="calDayClasses"></div>
+
+          <div class="viewpanel active" id="calView-week">
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" id="calWeekPrev">‹</button>
+              <div class="calendar-label" id="calWeekLabel">—</div>
+              <button class="calendar-nav-btn" id="calWeekNext">›</button>
+            </div>
+            <div class="week-strip" id="calWeekStrip"></div>
+            <h3 id="calSelectedDayLabel" style="font-size:14px; color:var(--navy); margin-bottom:10px;"></h3>
+            <div id="calDayClasses"></div>
+          </div>
+
+          <div class="viewpanel" id="calView-month">
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" id="calMonthPrev">‹</button>
+              <div class="calendar-label" id="calMonthLabel">—</div>
+              <button class="calendar-nav-btn" id="calMonthNext">›</button>
+            </div>
+            <div class="month-grid" id="calMonthGrid"></div>
+            <div id="calMonthDayDetail"></div>
+          </div>
         </div>
       </div>
 
