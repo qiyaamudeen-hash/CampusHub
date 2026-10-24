@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusHub — Student</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">Loading CampusHub…</div>
+
+  <div class="app-shell" id="appShell" style="display:none;">
+    <div class="topbar">
+      <h1>CampusHub <span class="role-badge">Student</span></h1>
+      <div class="user-info">
+        <span id="userName"></span>
+        <button class="btn-logout" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="section-tabs">
+        <button class="section-tab active" data-section="calendar">Calendar</button>
+        <button class="section-tab" data-section="info">Information</button>
+        <button class="section-tab" data-section="lostfound">Lost & Found</button>
+      </div>
+
+      <!-- Calendar -->
+      <div class="section-panel active" id="section-calendar">
+        <div class="section-header"><h2>Your Academic Calendar</h2></div>
+        <div id="enrollmentNotice" class="form-msg" style="display:none;"></div>
+        <div id="noSessionNotice" style="display:none;"></div>
+
+        <div id="calendarBody" style="display:none;">
+          <div class="calendar-nav">
+            <button class="calendar-nav-btn" id="calWeekPrev">‹</button>
+            <div class="calendar-label" id="calWeekLabel">—</div>
+            <button class="calendar-nav-btn" id="calWeekNext">›</button>
+          </div>
+          <div class="week-strip" id="calWeekStrip"></div>
+          <h3 id="calSelectedDayLabel" style="font-size:14px; color:var(--navy); margin-bottom:10px;"></h3>
+          <div id="calDayClasses"></div>
+        </div>
+      </div>
+
+      <!-- Information -->
+      <div class="section-panel" id="section-info">
+        <div class="section-header"><h2>Information</h2></div>
+
+        <h3 style="font-size:13px; color:var(--navy); margin-bottom:10px;">General</h3>
+        <div id="generalInfoList"></div>
+
+        <h3 style="font-size:13px; color:var(--navy); margin:22px 0 10px;">Your Courses</h3>
+        <div id="courseInfoNotice" class="form-msg" style="display:none;"></div>
+        <div id="courseInfoList"></div>
+      </div>
+
+      <!-- Lost & Found -->
+      <div class="section-panel" id="section-lostfound">
+        <div class="section-header">
+          <h2>Lost & Found</h2>
+          <button class="btn btn-primary" style="width:auto;" id="reportItemBtn">+ Report Item</button>
+        </div>
+        <div id="lostFoundList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report item modal -->
+  <div class="modal-overlay hidden" id="reportModal">
+    <div class="modal">
+      <h3>Report an Item</h3>
+      <div class="form-msg" id="reportMsg"></div>
+      <form id="reportForm">
+        <div class="tag-selector-row" style="display:flex; gap:8px; margin-bottom:14px;">
+          <label style="flex:1;">
+            <input type="radio" name="itemStatus" value="Lost" checked /> I lost something
+          </label>
+          <label style="flex:1;">
+            <input type="radio" name="itemStatus" value="Found" /> I found something
+          </label>
+        </div>
+        <div class="field">
+          <label for="itemNameInput">Item name</label>
+          <input type="text" id="itemNameInput" required placeholder="e.g. Black Headphones" />
+        </div>
+        <div class="field">
+          <label for="itemCategoryInput">Category</label>
+          <input type="text" id="itemCategoryInput" placeholder="e.g. Electronics, Clothing, ID/Cards" />
+        </div>
+        <div class="field">
+          <label for="itemDescInput">Description</label>
+          <textarea id="itemDescInput" required rows="3" style="width:100%; padding:10px 12px; border:2px solid var(--bg); border-radius:6px; font-family:inherit; font-size:14px;" placeholder="Where and when…"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelReport">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="reportSubmitBtn">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/student.js"></script>
+</body>
+</html>
