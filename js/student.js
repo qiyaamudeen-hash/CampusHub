@@ -6,6 +6,7 @@ import {
   startOfWeek, isDateInRange, currentSemesterNumber, nextSemester,
   effectiveStatus,
 } from "./calendarUtils.js";
+import { uploadFile, fileUrl, fileBodyHtml } from "./localFiles.js";
 import {
   collection, query, where, orderBy, onSnapshot,
   doc, documentId, addDoc, serverTimestamp,
@@ -108,7 +109,7 @@ function listenToSchedule() {
 
   const q = query(collection(db, "scheduleEntries"), where("courseId", "in", courseIds));
   scheduleUnsub = onSnapshot(q, (snap) => {
-    enrolledEntries = snap.docs.map((d) => d.data());
+    enrolledEntries = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderCalendar();
   });
 }
@@ -245,7 +246,9 @@ function infoCardHtml(item) {
   const body =
     item.type === "message"
       ? `<p>${escapeHtml(item.content).replace(/\n/g, "<br>")}</p>`
-      : `<p><a href="${escapeHtml(item.content)}" target="_blank" rel="noopener">${escapeHtml(item.content)}</a></p>`;
+      : item.fileName
+        ? fileBodyHtml(item)
+        : `<p><a href="${escapeHtml(item.content)}" target="_blank" rel="noopener">${escapeHtml(item.content)}</a></p>`;
   return `
     <div class="info-card">
       <span class="info-type">${infoTypeLabel(item.type)}</span>
@@ -388,8 +391,12 @@ function renderLostFound() {
     } else {
       actionHtml = `<button class="btn btn-secondary btn-small claimBtn" data-id="${i.id}">Claim this item</button>`;
     }
+    const photoHtml = i.fileName
+      ? `<a href="${fileUrl(i.fileName, i.fileOriginalName)}" target="_blank" rel="noopener"><img src="${fileUrl(i.fileName, i.fileOriginalName)}" alt="${escapeHtml(i.itemName)}" loading="lazy" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin-bottom:10px; display:block;" /></a>`
+      : "";
     return `
       <div class="card" style="background:white; border-radius:10px; padding:16px; margin-bottom:12px; border:1px solid var(--border);">
+        ${photoHtml}
         <span class="badge status-${status.toLowerCase()}">${escapeHtml(status)}</span>
         <div style="font-weight:600; font-size:15px; margin:6px 0 4px;">${escapeHtml(i.itemName)}${i.category ? ` <span class="small-muted">(${escapeHtml(i.category)})</span>` : ""}</div>
         <div style="font-size:13px; color:#555; margin-bottom:8px;">${escapeHtml(i.description)}</div>
@@ -420,8 +427,21 @@ async function submitClaim(itemId) {
 
 // ---------------- Report item modal ----------------
 const reportModal = document.getElementById("reportModal");
+const photoInput = document.getElementById("itemPhotoInput");
+const photoPreview = document.getElementById("itemPhotoPreview");
+photoInput.addEventListener("change", () => {
+  const f = photoInput.files[0];
+  if (f && f.type.startsWith("image/")) {
+    photoPreview.src = URL.createObjectURL(f);
+    photoPreview.classList.remove("hidden");
+  } else {
+    photoPreview.classList.add("hidden");
+  }
+});
+
 document.getElementById("reportItemBtn").addEventListener("click", () => {
   document.getElementById("reportForm").reset();
+  photoPreview.classList.add("hidden");
   document.getElementById("reportMsg").className = "form-msg";
   reportModal.classList.remove("hidden");
 });
@@ -437,11 +457,15 @@ document.getElementById("reportForm").addEventListener("submit", async (e) => {
   btn.textContent = "Submitting…";
   try {
     const status = document.querySelector('input[name="itemStatus"]:checked').value;
+    const photo = photoInput.files[0];
+    if (photo && !photo.type.startsWith("image/")) throw new Error("The photo must be an image.");
+    const photoFields = photo ? await uploadFile(photo) : {}; // fileName, fileOriginalName, fileSize
     await addDoc(collection(db, "lostFoundItems"), {
       itemName: document.getElementById("itemNameInput").value.trim(),
       category: document.getElementById("itemCategoryInput").value.trim(),
       description: document.getElementById("itemDescInput").value.trim(),
       status,
+      ...photoFields,
       reportedByUserId: currentUser.uid,
       dateReported: serverTimestamp(),
     });

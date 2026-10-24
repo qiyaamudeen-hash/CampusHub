@@ -88,6 +88,8 @@ export async function sendResetEmail(email) {
   await sendPasswordResetEmail(auth, email);
 }
 
+const VALID_ROLES = ["student", "lecturer", "admin"];
+
 /** Route guard for a dashboard page. */
 export function guardPage({ allowedRoles, onReady }) {
   onAuthStateChanged(auth, async (user) => {
@@ -95,11 +97,24 @@ export function guardPage({ allowedRoles, onReady }) {
       window.location.href = "index.html";
       return;
     }
-    const role = await getUserRole(user.uid);
-    if (!role || !allowedRoles.includes(role)) {
+     let role;
+      try {
+        role = await getUserRole(user.uid);
+      } catch (err) {
+        const el = document.getElementById("loadingScreen");
+         if (el) el.textContent = "Couldn't load your account: " + err.message;
+          return;
+      }
+       if (!VALID_ROLES.includes(role)) {
+        await signOut(auth);
+        window.location.href = "index.html?badprofile=1";
+        return; 
+       }
+       if (!allowedRoles.includes(role)) {
       window.location.href = roleHome(role);
       return;
     }
+    
     onReady(user, role);
   });
 }

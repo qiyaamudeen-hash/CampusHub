@@ -264,7 +264,8 @@
           <label for="siType">Type</label>
           <select id="siType">
             <option value="message">Message</option>
-            <option value="document">Document (link)</option>
+            <option value="document">Document (file)</option>
+            <option value="picture">Picture (file)</option>
           </select>
         </div>
         <div class="field">
@@ -275,10 +276,10 @@
           <label for="siMessage">Message</label>
           <textarea id="siMessage" rows="4" style="width:100%; padding:10px 12px; border:2px solid var(--bg); border-radius:6px; font-family:inherit; font-size:14px;"></textarea>
         </div>
-        <div class="field" id="siLinkField" style="display:none;">
-          <label for="siLink">Link</label>
-          <input type="url" id="siLink" placeholder="https://…" />
-          <div class="hint">No file storage on the free Firebase plan — paste a Drive/OneDrive link instead.</div>
+        <div class="field" id="siFileField" style="display:none;">
+          <label for="siFile">File</label>
+          <input type="file" id="siFile" />
+          <div class="hint">Saved on the computer running UploadServer.java — max 10 MB.</div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="cancelSubjectInfo">Cancel</button>

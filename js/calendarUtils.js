@@ -1,80 +1,108 @@
-// ============================================================
-// CampusHub — calendar date helpers
-// Dates are always plain "YYYY-MM-DD" strings, compared/handled as local
-// calendar dates (no timezone math) — this matches <input type="date">.
-// ============================================================
+import { auth, db, withSecondaryAuth } from "./firebase-config.js";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
 
-export function toISODate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+export async function signUp(name, email, password) {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await setDoc(doc(db, "users", cred.user.uid), {
+    name,
+    email,
+    role: "student",
+    disabled: false,
+    createdAt: serverTimestamp(),
+  });
+  return cred.user;
 }
 
-export function parseISODate(str) {
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(y, m - 1, d);
+/** Logs in, blocks disabled accounts, and records a login event. */
+export async function logIn(email, password) {
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  const profile = await getDoc(doc(db, "users", cred.user.uid));
+
+  if (profile.exists() && profile.data().disabled) {
+    await signOut(auth);
+    const err = new Error("This account has been disabled.");
+    err.code = "auth/account-disabled";
+    throw err;
+  }
+
+  await logLoginEvent(cred.user.uid);
+  return cred.user;
 }
 
-export function todayISO() {
-  return toISODate(new Date());
+export async function logOut() {
+  await signOut(auth);
 }
 
-export function addDays(date, n) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
+/** Writes a login-history entry and bumps lastLoginAt on the profile. */
+async function logLoginEvent(uid) {
+  await addDoc(collection(db, "users", uid, "loginEvents"), {
+    at: serverTimestamp(),
+    userAgent: navigator.userAgent,
+  });
+  await setDoc(doc(db, "users", uid), { lastLoginAt: serverTimestamp() }, { merge: true });
 }
 
-export function weekdayName(date) {
-  return WEEKDAY_NAMES[date.getDay()];
+export async function getUserRole(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (!snap.exists()) return null;
+  return snap.data().role || "student";
 }
 
-export function monthName(monthIndex) {
-  return MONTH_NAMES[monthIndex];
+
+export async function createUserAsAdmin(name, email, password, role) {
+  return withSecondaryAuth(async (secondaryAuth) => {
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      name,
+      email,
+      role,
+      disabled: false,
+      createdAt: serverTimestamp(),
+    });
+    await signOut(secondaryAuth);
+    return cred.user.uid;
+  });
 }
 
-// Sunday-first week containing `date`.
-export function startOfWeek(date) {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay());
-  return d;
+/** Admin-only: emails the user a link to set a new password themselves. */
+export async function sendResetEmail(email) {
+  await sendPasswordResetEmail(auth, email);
 }
 
-export function isDateInRange(dateStr, startStr, endStr) {
-  if (!startStr || !endStr) return false;
-  return dateStr >= startStr && dateStr <= endStr;
+/** Route guard for a dashboard page. */
+export function guardPage({ allowedRoles, onReady }) {
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    const role = await getUserRole(user.uid);
+    if (!role || !allowedRoles.includes(role)) {
+      window.location.href = roleHome(role);
+      return;
+    }
+    onReady(user, role);
+  });
 }
 
-// Which semester (1, 2, or null) a given date falls in, given the two
-// `semesters` docs ({1: {startDate,endDate}, 2: {...}}).
-export function currentSemesterNumber(semesters, dateStr = todayISO()) {
-  const s1 = semesters[1], s2 = semesters[2];
-  if (s1 && isDateInRange(dateStr, s1.startDate, s1.endDate)) return 1;
-  if (s2 && isDateInRange(dateStr, s2.startDate, s2.endDate)) return 2;
-  return null;
-}
-
-// The next semester due to start after `dateStr` (for a friendly
-// "no active semester right now" message). Null if neither is upcoming.
-export function nextSemester(semesters, dateStr = todayISO()) {
-  const candidates = [semesters[1], semesters[2]].filter((s) => s && s.startDate && s.startDate > dateStr);
-  candidates.sort((a, b) => a.startDate.localeCompare(b.startDate));
-  return candidates[0] || null;
-}
-
-// Effective status for one class occurrence on one date, applying
-// overrides in priority order: a whole day off beats a single-entry
-// override, which beats the entry's own default status.
-export function effectiveStatus(entry, dateStr, dayOffSet, overrideMap) {
-  if (dayOffSet && dayOffSet.has(dateStr)) return "Cancelled";
-  const ov = overrideMap && overrideMap.get(entry.id + "_" + dateStr);
-  if (ov) return ov.status;
-  return entry.status || "Happening";
+/** Where a given role's dashboard lives — now three distinct destinations. */
+export function roleHome(role) {
+  if (role === "admin") return "admin.html";
+  if (role === "lecturer") return "lecturer.html";
+  return "student.html";
 }

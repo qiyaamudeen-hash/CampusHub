@@ -2,12 +2,13 @@ import { guardPage, logOut } from "./auth.js";
 import { db } from "./firebase-config.js";
 import {
   DEGREES, YEARS, SEMESTERS, yearLabel, semesterLabel, typeLabel,
-  DAYS, CLASS_STATUSES, classStatusLabel, infoTypeLabel,
+  DAYS, CLASS_STATUSES, infoTypeLabel,
 } from "./academic.js";
 import {
-  toISODate, todayISO, addDays, weekdayName, monthName,
+  toISODate, addDays, weekdayName, monthName,
   startOfWeek, currentSemesterNumber, effectiveStatus,
 } from "./calendarUtils.js";
+import { uploadFile, fileUrl, fileBodyHtml, DOC_ACCEPT, IMAGE_ACCEPT } from "./localFiles.js";
 import {
   collection, query, where, orderBy, onSnapshot, getDocs, getDoc,
   doc, addDoc, updateDoc, deleteDoc, setDoc, serverTimestamp,
@@ -132,7 +133,9 @@ function infoCardHtml(item, removable, extraAttrs = "") {
   const body =
     item.type === "message"
       ? `<p>${escapeHtml(item.content).replace(/\n/g, "<br>")}</p>`
-      : `<p><a href="${escapeHtml(item.content)}" target="_blank" rel="noopener">${escapeHtml(item.content)}</a></p>`;
+      : item.fileName
+        ? fileBodyHtml(item)
+        : `<p><a href="${escapeHtml(item.content)}" target="_blank" rel="noopener">${escapeHtml(item.content)}</a></p>`;
   return `
     <div class="info-card">
       <span class="info-type">${infoTypeLabel(item.type)}</span>
@@ -312,9 +315,10 @@ $("courseInfoList").addEventListener("click", async (e) => {
 
 let siTargetSubjectId = null;
 function toggleSiFields() {
-  const isMsg = $("siType").value === "message";
-  $("siMessageField").style.display = isMsg ? "block" : "none";
-  $("siLinkField").style.display = isMsg ? "none" : "block";
+  const type = $("siType").value;
+  $("siMessageField").style.display = type === "message" ? "block" : "none";
+  $("siFileField").style.display = type === "message" ? "none" : "block";
+  $("siFile").accept = type === "picture" ? IMAGE_ACCEPT : DOC_ACCEPT;
 }
 $("siType").addEventListener("change", toggleSiFields);
 
@@ -333,21 +337,29 @@ $("subjectInfoForm").addEventListener("submit", async (e) => {
   const msg = $("subjectInfoMsg");
   const type = $("siType").value;
   const title = $("siTitle").value.trim();
-  const content = type === "message" ? $("siMessage").value.trim() : $("siLink").value.trim();
-  if (!title || !content) {
-    showMsg(msg, `Fill in a title and ${type === "message" ? "a message" : "a link"}.`, "error");
+  const message = $("siMessage").value.trim();
+  const file = $("siFile").files[0];
+  if (!title || (type === "message" ? !message : !file)) {
+    showMsg(msg, `Fill in a title and ${type === "message" ? "a message" : "choose a file"}.`, "error");
     return;
   }
+  const btn = e.submitter;
+  btn.disabled = true;
   try {
-    await addDoc(collection(db, "subjectInfo", siTargetSubjectId, "items"), {
-      type, title, content,
-      createdBy: currentUser.uid,
-      createdAt: serverTimestamp(),
-    });
+    const data = { type, title, createdBy: currentUser.uid, createdAt: serverTimestamp() };
+    if (type === "message") {
+      data.content = message;
+    } else {
+      showMsg(msg, "Uploading…", "success");
+      Object.assign(data, await uploadFile(file)); // adds fileName, fileOriginalName, fileSize
+    }
+    await addDoc(collection(db, "subjectInfo", siTargetSubjectId, "items"), data);
     showMsg(msg, "Info added.", "success");
     setTimeout(() => $("subjectInfoModal").classList.add("hidden"), 600);
   } catch (err) {
     showMsg(msg, "Couldn't add info: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
   }
 });
 
@@ -476,8 +488,11 @@ function listenToLostFound() {
       const i = d.data();
       const status = i.status || "Lost";
       const row = document.createElement("tr");
+      const photo = i.fileName
+        ? `<a href="${fileUrl(i.fileName, i.fileOriginalName)}" target="_blank" rel="noopener"><img src="${fileUrl(i.fileName, i.fileOriginalName)}" alt="" loading="lazy" style="width:56px; height:56px; object-fit:cover; border-radius:6px; display:block; margin-bottom:6px;" /></a>`
+        : "";
       row.innerHTML = `
-        <td>${escapeHtml(i.itemName)}</td>
+        <td>${photo}${escapeHtml(i.itemName)}</td>
         <td>${escapeHtml(i.description || "—")}</td>
         <td><span class="badge status-${status.toLowerCase()}">${escapeHtml(status)}</span></td>
         <td>

@@ -1,7 +1,4 @@
-// ============================================================
-// Shared academic constants used by the Admin, Lecturer and Student pages.
-// To offer another degree, just add it to DEGREES below.
-// ============================================================
+
 export const DEGREES = ["BSc IT", "DIT", "BBA", "BCom"];
 
 export const YEARS = [

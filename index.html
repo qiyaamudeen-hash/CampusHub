@@ -79,7 +79,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const role = await getUserRole(user.uid);
-        window.location.href = roleHome(role);
+         if (["student", "lecturer", "admin"].includes(role)) window.location.href = roleHome(role);
       }
     });
 
@@ -124,6 +124,9 @@
         return "This account has been disabled. Contact your campus admin.";
       }
       return "Something went wrong. Please try again.";
+    }
+    if (new URLSearchParams(location.search).has("badprofile")) {  
+      showMsg(document.getElementById("loginMsg"), "That account has no valid profile in Firestore (users collection): it is missing, or its role isn't exactly student, lecturer or admin. Fix it there, then log in again.", "error");  
     }
 
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
